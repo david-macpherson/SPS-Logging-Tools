@@ -3,7 +3,7 @@ param(
     [String]$namespace="",
     [switch]$Help=$false,
     [switch]$h=$false,
-    [switch]$StopJobs=$false
+    [switch]$stopJobs=$false
 )
 
 
@@ -11,12 +11,14 @@ param(
 if ($Help -Or $h){
     write-host "Usage: $0 [OPTIONS]"
     write-host "Options:"
-    write-host "-h | -Help       Display this help message"
+    write-host "-h | -Help  Display this help message"
     write-host "-namespace  Overides the kubectl context namespace"
+    write-host "-stopJobs    Will stop all the background jobs that are running"
+    
     exit 0
 }
 
-if ($StopJobs) {
+if ($stopJobs) {
     Write-Host "Stopping all background logging jobs, This can take some time"
     get-job | stop-job
     Write-Host "All logging jobs have been stopped"
