@@ -1,18 +1,24 @@
 #!/bin/bash
 
+#
+# This script will loop through each pod and start to stream the pods logs to a file
+# args 
+#   -h | --help      Displays the help message
+#   -n | --namespace Overides the kubectl context namespace
+#
+
+
 # Stop the script if an error occurs
 set -e
 
-
-# Check if kubectl is accessible
-if ! command -v kubectl &> /dev/null
-then
-    echo "kubectl could not be found"
-    exit 1
-fi
-
 # Const to set the log output dir
 LOG_OUTPUT_DIR=./logs
+
+# Var to set the current namespace
+NAMESPACE=`kubectl config view --minify -o jsonpath='{..namespace}'`
+CONTEXT=`kubectl config current-context`
+COMMAND_NAMESPACE_ARGS=""
+
 
 # If the log out put dir exists then remove it
 if [ -d "$LOG_OUTPUT_DIR" ]; then 
@@ -21,6 +27,33 @@ fi
 
 # Create the log output directory
 mkdir -p $LOG_OUTPUT_DIR
+
+# Sets the handling of the flags for the script
+while [ $# -gt 0 ]; do
+    case $1 in
+        -h | --help)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo " -h, --help       Display this help message"
+            echo " -n, --namespace  Overides the kubectl context namespace"
+            exit 0
+        ;;
+        -n | --namespace)
+            shift
+            NAMESPACE="$1"
+            shift
+        ;;
+    esac
+done
+
+# If the Namespace var is not empty then set the command namespace args to the namespace flags
+if [ ! -z "$NAMESPACE" ]
+then
+      COMMAND_NAMESPACE_ARGS="--namespace $NAMESPACE"     
+fi
+
+
+echo "Getting pods logs for context: $CONTEXT in namespace: $NAMESPACE press crtl+c to stop logging"
 
 # Loop through forever, to exit pres ctrl+c to terminate script
 while [ true ]
@@ -47,7 +80,7 @@ do
                 echo "$POD - $CONTAINER"
 
                 # Start a background process to stream the pods container logs to the  log file
-                kubectl logs --follow $POD --container $CONTAINER > $LOG_OUTPUT_DIR/$FILE &
+                kubectl logs --follow $POD --container $CONTAINER $COMMAND_NAMESPACE_ARGS > $LOG_OUTPUT_DIR/$FILE &
             fi
         done
     done
