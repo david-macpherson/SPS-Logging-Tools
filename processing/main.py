@@ -20,6 +20,15 @@ filteredDir =  os.path.join(os.getcwd(), "logs")
 
 directory = os.fsencode(directoryPath)
 
+listOfUeLogs = []
+
+for file in os.listdir(directoryPath):
+    filename = os.fsdecode(file)
+    if filename.startswith("sps-application"):
+        listOfUeLogs.append(filename)
+    
+
+
 if os.path.exists(filteredDir):
     shutil.rmtree(filteredDir)
 
@@ -79,16 +88,13 @@ def getWebsocketDisconnectTimes(LogPath):
         return playerPingFailed, message
         
 
+def getUELogPath(logDirPath,instanceID):
 
-
-            
-
-
-
-
-#{"level":"error","ts":1702303917.4926786,"caller":"logic/player.go:157","msg":"websocket: close 1001 (going away)","player":"0ed2289c-fa53-459e-b7f6-f5b2a86b8638","stacktrace":"github.com/tensorworks/sps-framework/internal/signalling/logic.(*ConnectedPlayer).ProcessMessages\n\t/home/runner/work/SPS-Framework/SPS-Framework/internal/signalling/logic/player.go:157"}
-#{"level":"error","ts":1702304039.4347928,"caller":"logic/instance.go:85","msg":"websocket: close 1006 (abnormal closure): unexpected EOF","instance":"sps-application-c58dcb94-c196-4d68-b72d-29aa6124166e","stacktrace":"github.com/tensorworks/sps-framework/internal/signalling/logic.(*ConnectedInstance).ProcessMessages\n\t/home/runner/work/SPS-Framework/SPS-Framework/internal/signalling/logic/instance.go:85"}
-
+    for file in os.listdir(logDirPath):
+        filename = os.fsdecode(file)
+        if filename.startswith(instanceID):
+            return os.path.join(logDirPath, filename)
+    return None
 
 def extractSSLogs(ssLogPath,outputDir,playerID,instanceID=None):
     # Safety check to ensure the instance ID and player id is set
@@ -152,7 +158,7 @@ for file in os.listdir(directory):
         
 
         with open(overviewFilePath, "a") as overviewFile:
-            overviewFile.write("playerID" + "," + "instanceID" + "," + "unixEpochStartTime" + ","  + "unixEpochEndTime" + "," + "duration" + "," +"playerPingFailed" + "," + "closure notes" + "\n")
+            overviewFile.write("playerID" + "," + "instanceID" + "," + "unixEpochStartTime" + ","  + "unixEpochEndTime" + "," + "duration" + "," +"playerPingFailed" + "," + "closure notes" + "," + "ueLogPath" +"\n")
                     
 
         for playerID,instanceID in players.items():
@@ -161,6 +167,13 @@ for file in os.listdir(directory):
             startTime, endTime, diffTime =  extractTimeData(filteredLog)
             
             playerPingFailed, webSocketNotes,  = getWebsocketDisconnectTimes(filteredLog)
-            
+
+            if instanceID != None:
+                ueLogFileName = next((x for x in listOfUeLogs if str(x).startswith(instanceID)), None)
+                ueLogFilePath = None
+                if ueLogFileName != None:
+                    ueLogFilePath = os.path.join(directoryPath, ueLogFileName)
+
+
             with open(overviewFilePath, "a") as overviewFile:
-                overviewFile.write(playerID + "," + str(instanceID) + "," + str(startTime) + ","  + str(endTime) + "," + str(diffTime) + "," + str(playerPingFailed) +  "," + str(webSocketNotes) + "\n")
+                overviewFile.write(playerID + "," + str(instanceID) + "," + str(startTime) + ","  + str(endTime) + "," + str(diffTime) + "," + str(playerPingFailed) +  "," + str(webSocketNotes) + "," + str(ueLogFilePath) + "\n")
