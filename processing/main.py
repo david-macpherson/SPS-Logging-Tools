@@ -16,7 +16,7 @@ config = vars(args)
 
 
 directoryPath = config["directory"] 
-filteredDir =  os.path.join(os.getcwd(), "logs")
+filteredDir =  os.path.join(os.getcwd(), os.path.basename(directoryPath))
 
 directory = os.fsencode(directoryPath)
 
