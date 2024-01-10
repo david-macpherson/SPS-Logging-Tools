@@ -12,21 +12,14 @@
 set -e
 
 # Const to set the log output dir
-LOG_OUTPUT_DIR=./logs
+DATE=$(date '+%Y-%m-%d-T-%H-%M')
+LOG_OUTPUT_DIR=./logs-$DATE
 
 # Var to set the current namespace
 NAMESPACE=`kubectl config view --minify -o jsonpath='{..namespace}'`
 CONTEXT=`kubectl config current-context`
 COMMAND_NAMESPACE_ARGS=""
 
-
-# If the log out put dir exists then remove it
-if [ -d "$LOG_OUTPUT_DIR" ]; then 
-    rm -rf $LOG_OUTPUT_DIR
-fi
-
-# Create the log output directory
-mkdir -p $LOG_OUTPUT_DIR
 
 # Sets the handling of the flags for the script
 while [ $# -gt 0 ]; do
@@ -46,6 +39,8 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+
+
 # If the Namespace var is not empty then set the command namespace args to the namespace flags
 if [ ! -z "$NAMESPACE" ]
 then
@@ -54,6 +49,15 @@ fi
 
 
 echo "Getting pods logs for context: $CONTEXT in namespace: $NAMESPACE press crtl+c to stop logging"
+
+# If the log out put dir exists then remove it
+if [ -d "$LOG_OUTPUT_DIR" ]; then 
+    rm -rf $LOG_OUTPUT_DIR
+fi
+
+# Create the log output directory
+mkdir -p $LOG_OUTPUT_DIR
+
 
 # Loop through forever, to exit pres ctrl+c to terminate script
 while [ true ]
@@ -72,10 +76,9 @@ do
         do
             # Generate the log file name based on the pod and container name
             FILE=$POD.$CONTAINER.log
-            
-            # Check if the log file doesn't exists and the file is empty
-            if [ ! -f "$FILE" ] || [ ! -s $FILE ]; then
 
+            # Check if the log file doesn't exists and the file is empty
+            if [ ! -s $LOG_OUTPUT_DIR/$FILE ]; then
                 # Output the pod and container name
                 echo "$POD - $CONTAINER"
 
